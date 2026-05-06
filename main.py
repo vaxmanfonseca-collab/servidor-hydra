@@ -10,6 +10,7 @@ async def get():
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
+    global quadrado_amarelo  # Movido para o topo da função
     await websocket.accept()
     clients.append(websocket)
     try:
@@ -18,11 +19,14 @@ async def websocket_endpoint(websocket: WebSocket):
         while True:
             data = await websocket.receive_text()
             if data == "CLICK":
-                global quadrado_amarelo
                 quadrado_amarelo = not quadrado_amarelo
                 estado = "ON" if quadrado_amarelo else "OFF"
                 # Avisa todos os clientes conectados
                 for client in clients:
-                    await client.send_text(estado)
+                    try:
+                        await client.send_text(estado)
+                    except:
+                        continue
     except WebSocketDisconnect:
-        clients.remove(websocket)
+        if websocket in clients:
+            clients.remove(websocket)
