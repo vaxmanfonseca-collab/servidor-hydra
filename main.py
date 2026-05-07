@@ -4,6 +4,7 @@ import uvicorn
 
 app = FastAPI()
 
+
 # --- ARTE ASCII: DOME OF HYDRA ---
 BANNER = """
  ██████   ██████  ███    ███ ███████      ██████  ███████ 
