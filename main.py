@@ -103,3 +103,7 @@ async def websocket_endpoint(websocket: WebSocket):
         if websocket in clients:
             clients.remove(websocket)
         print("--> LOG: Dispositivo desconectado.")
+
+
+        #PORRA DO CARALHO
+        
