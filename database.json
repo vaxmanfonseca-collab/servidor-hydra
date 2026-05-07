@@ -1,0 +1,14 @@
+{
+  "updates": [
+    {
+      "versao": "3.0",
+      "descricao": "Versao inicial com sistema de update",
+      "url": "https://link-da-versao-3-0.com"
+    },
+    {
+      "versao": "3.1",
+      "descricao": "Correção de cores e logs",
+      "url": "https://transfer.sh/hydra_v3_1.apk"
+    }
+  ]
+}
