@@ -1,31 +1,56 @@
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
-from pydantic import BaseModel
+import requests
+import uvicorn
 
 app = FastAPI()
 
-# --- CONFIGURAÇÃO DO SISTEMA DE ATUALIZAÇÃO ---
-latest_apk_link = "https://esperando-primeiro-link.com"
+# --- ARTE ASCII: DOME OF HYDRA ---
+BANNER = """
+ ██████   ██████  ███    ███ ███████      ██████  ███████ 
+ ██   ██ ██    ██ ████  ████ ██          ██    ██ ██      
+ ██   ██ ██    ██ ██ ████ ██ █████       ██    ██ █████   
+ ██   ██ ██    ██ ██  ██  ██ ██          ██    ██ ██      
+ ██████   ██████  ██      ██ ███████      ██████  ██      
+                                                          
+                                                          
+ ██   ██ ██    ██ ██████  ██████   █████                  
+ ██   ██  ██  ██  ██   ██ ██   ██ ██   ██                 
+ ███████   ████   ██   ██ ██████  ███████                 
+ ██   ██    ██    ██   ██ ██   ██ ██   ██                 
+ ██   ██    ██    ██████  ██   ██ ██   ██                 
+                                                          
+  ---|||  SYSTEM OPERATIONAL: HYDRA'S DOME  |||---
+"""
 
-class UpdateLink(BaseModel):
-    link: str
+# --- CONFIGURAÇÃO DO BANCO DE DATOS (GITHUB) ---
+# Substitua pelo seu link RAW do database.json
+GITHUB_RAW_URL = "https://raw.githubusercontent.com/SEU_USUARIO/SEU_REPOSITORIO/main/database.json"
 
 @app.get("/")
 async def get_root():
-    return {"status": "Servidor Hydra Online e Operacional"}
+    return {
+        "msg": "DOME OF HYDRA IS ONLINE",
+        "status": "SECURE",
+        "power": "100%",
+        "system_v": "3.0"
+    }
 
-# ROTA 1: O Celular consulta essa rota para saber onde baixar o novo APK
+# ROTA DE DOWNLOAD (O SEU PROCV)
 @app.get("/get-latest-apk")
 async def get_apk():
-    return {"url": latest_apk_link}
+    try:
+        response = requests.get(GITHUB_RAW_URL)
+        response.raise_for_status()
+        data = response.json()
+        
+        # Pega o último item da lista 'updates'
+        ultima_versao = data["updates"][-1]
+        
+        return {"url": ultima_versao["url"], "v": ultima_versao["versao"]}
+    except Exception as e:
+        return {"error": f"Falha ao acessar o Domo: {str(e)}"}
 
-# ROTA 2: O Colab usa essa rota para enviar o link novo após o build
-@app.post("/update-apk-link")
-async def update_link(data: UpdateLink):
-    global latest_apk_link
-    latest_apk_link = data.link
-    return {"status": "Link atualizado com sucesso no servidor"}
-
-# --- CONFIGURAÇÃO DO QUADRADO AMARELO (WEBSOCKET) ---
+# --- NÚCLEO WEBSOCKET (QUADRADO AMARELO) ---
 clients = []
 quadrado_amarelo = False
 
@@ -35,7 +60,7 @@ async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
     clients.append(websocket)
     try:
-        # Envia o estado atual assim que o celular ou PC conecta
+        # Envia o estado atual na conexão
         await websocket.send_text("ON" if quadrado_amarelo else "OFF")
         
         while True:
@@ -43,7 +68,8 @@ async def websocket_endpoint(websocket: WebSocket):
             if data == "CLICK":
                 quadrado_amarelo = not quadrado_amarelo
                 estado = "ON" if quadrado_amarelo else "OFF"
-                # Avisa todos os dispositivos (Celular e Notebook)
+                
+                # Sincroniza todos os dispositivos conectados
                 for client in clients:
                     try:
                         await client.send_text(estado)
@@ -52,3 +78,12 @@ async def websocket_endpoint(websocket: WebSocket):
     except WebSocketDisconnect:
         if websocket in clients:
             clients.remove(websocket)
+
+# LOG NO TERMINAL DO RENDER
+if __name__ == "__main__":
+    print(BANNER)
+    uvicorn.run(app, host="0.0.0.0", port=10000)
+
+print(BANNER) # Garante que apareça nos logs do Render
+
+            ### MAIN GITHUB !!! SERVIDOR GITHUB-RENDER
