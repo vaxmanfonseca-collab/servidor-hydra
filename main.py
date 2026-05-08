@@ -1,3 +1,4 @@
+
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel
 import json
@@ -120,4 +121,4 @@ async def websocket_endpoint(websocket: WebSocket):
         print("--> LOG: Dispositivo desconectado.")
 
 
-        #PORRA
+       # SERVIDOR
