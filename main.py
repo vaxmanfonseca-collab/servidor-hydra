@@ -55,7 +55,23 @@ async def startup_event():
 
 @app.get("/")
 async def get_root():
+    banner_texto = (
+        "##############################################################\n"
+        "#                                                            #\n"
+        "#    ________                                                #\n"
+        "#    \______ \   ____   _____   ____                         #\n"
+        "#     |    |  \ /  _ \ /     \_/ __ \                        #\n"
+        "#     |    `   (  <_> )  Y Y  \  ___/                        #\n"
+        "#    /_______  /\____/|__|_|  /\___  >                       #\n"
+        "#            \/             \/     \/   DOME OF HYDRA        #\n"
+        "#                                                            #\n"
+        "#       SISTEMA OPERACIONAL - SINCRONIZAÇÃO ATIVA            #\n"
+        "#                                                            #\n"
+        "##############################################################"
+    )
+    
     return {
+        "info": banner_texto,
         "status": "DOME OF HYDRA: Online",
         "dispositivos_conectados": len(clients),
         "versao_apk": latest_apk_link
@@ -105,5 +121,4 @@ async def websocket_endpoint(websocket: WebSocket):
         print("--> LOG: Dispositivo desconectado.")
 
 
-        #PORRA DO CARALHO
-        
+        #PORRA
