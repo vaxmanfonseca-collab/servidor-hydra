@@ -1,12 +1,12 @@
-
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 import json
 import os
 
 app = FastAPI()
 
-# --- CONFIGURAÇÃO DE PERSISTÊNCIA (PARA O RENDER NÃO ESQUECER) ---
+# --- CONFIGURAÇÃO DE PERSISTÊNCIA ---
 DB_FILE = "database.json"
 
 def save_link(link: str):
@@ -30,18 +30,18 @@ quadrado_amarelo = False
 class UpdateLink(BaseModel):
     link: str
 
-# --- BANNER DE INICIALIZAÇÃO ---
+# --- BANNER PARA O TERMINAL (STARTUP) ---
 @app.on_event("startup")
 async def startup_event():
     banner = r"""
     ##############################################################
     #                                                            #
-    #   ________                                                 #
-    #   \______ \   ____   _____   ____                         #
-    #    |    |  \ /  _ \ /     \_/ __ \                        #
-    #    |    `   (  <_> )  Y Y  \  ___/                        #
-    #   /_______  /\____/|__|_|  /\___  >                      #
-    #           \/             \/     \/   DOME OF HYDRA        #
+    #    ________                                                #
+    #    \______ \    ____   _____   ____                        #
+    #     |    |  \ /  _ \ /     \_/ __ \                        #
+    #     |    `   (  <_> )  Y Y  \  ___/                        #
+    #    /_______  /\____/|__|_|  /\___  >                       #
+    #            \/             \/     \/   DOME OF HYDRA        #
     #                                                            #
     #       SISTEMA OPERACIONAL - SINCRONIZAÇÃO ATIVA            #
     #                                                            #
@@ -51,56 +51,60 @@ async def startup_event():
     print(f"--> LOG: Servidor iniciado com sucesso.")
     print(f"--> LOG: APK atual na memória: {latest_apk_link}")
 
-# --- ROTAS API ---
-
-@app.get("/")
+# --- ROTA PRINCIPAL (VISUALIZAÇÃO NO NAVEGADOR) ---
+@app.get("/", response_class=HTMLResponse)
 async def get_root():
-    banner_texto = (
-        "##############################################################\n"
-        "#                                                            #\n"
-        "#    ________                                                #\n"
-        "#    \______ \   ____   _____   ____                         #\n"
-        "#     |    |  \ /  _ \ /     \_/ __ \                        #\n"
-        "#     |    `   (  <_> )  Y Y  \  ___/                        #\n"
-        "#    /_______  /\____/|__|_|  /\___  >                       #\n"
-        "#            \/             \/     \/   DOME OF HYDRA        #\n"
-        "#                                                            #\n"
-        "#       SISTEMA OPERACIONAL - SINCRONIZAÇÃO ATIVA            #\n"
-        "#                                                            #\n"
-        "##############################################################"
-    )
-    
-    return {
-        "info": banner_texto,
-        "status": "DOME OF HYDRA: Online",
-        "dispositivos_conectados": len(clients),
-        "versao_apk": latest_apk_link
-    }
+    # Este é o banner que aparecerá no seu Browser
+    banner_html = r"""
+    <html>
+    <body style="background-color: #0d0d0d; margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh;">
+        <pre style="color: #00ff00; font-family: 'Courier New', Courier, monospace; font-size: 14px; font-weight: bold; line-height: 1.2; text-shadow: 0 0 5px #00ff00;">
+##############################################################
+#                                                            #
+#    ________                                                #
+#    \______ \    ____   _____   ____                        #
+#     |    |  \ /  _ \ /     \_/ __ \                        #
+#     |    `   (  <_> )  Y Y  \  ___/                        #
+#    /_______  /\____/|__|_|  /\___  >                       #
+#            \/             \/     \/   DOME OF HYDRA        #
+#                                                            #
+#       SISTEMA OPERACIONAL - SINCRONIZAÇÃO ATIVA            #
+#                                                            #
+##############################################################
+
+STATUS: ONLINE
+DISPOSITIVOS CONECTADOS: {dispositivos}
+URL APK: {apk}
+        </pre>
+    </body>
+    </html>
+    """.format(dispositivos=len(clients), apk=latest_apk_link)
+    return banner_html
+
+# --- ROTAS DE DADOS ---
 
 @app.get("/get-latest-apk")
 async def get_apk():
-    # Carrega sempre do arquivo para garantir que pegou o último enviado pelo Colab
     return {"url": load_link()}
 
 @app.post("/update-apk-link")
 async def update_link(data: UpdateLink):
     global latest_apk_link
     latest_apk_link = data.link
-    save_link(data.link) # Salva no arquivo database.json
-    print(f"--> LOG: Novo link de APK recebido do Colab: {data.link}")
-    return {"status": "Link atualizado e persistido com sucesso"}
+    save_link(data.link)
+    print(f"--> LOG: Novo link recebido: {data.link}")
+    return {"status": "Link atualizado e persistido"}
 
-# --- SISTEMA WEBSOCKET (QUADRADO AMARELO) ---
+# --- SISTEMA WEBSOCKET (SINCRONIZAÇÃO) ---
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     global quadrado_amarelo
     await websocket.accept()
     clients.append(websocket)
-    print(f"--> LOG: Novo dispositivo conectado. Total: {len(clients)}")
     
     try:
-        # Envia o estado atual (ON/OFF) para o dispositivo que acabou de conectar
+        # Envia o estado atual assim que o dispositivo conecta
         await websocket.send_text("ON" if quadrado_amarelo else "OFF")
         
         while True:
@@ -109,8 +113,8 @@ async def websocket_endpoint(websocket: WebSocket):
                 quadrado_amarelo = not quadrado_amarelo
                 estado = "ON" if quadrado_amarelo else "OFF"
                 
-                # Avisa todos os dispositivos conectados e limpa conexões mortas
-                for client in clients[:]: 
+                # Broadcast para todos os clientes
+                for client in clients[:]:
                     try:
                         await client.send_text(estado)
                     except:
@@ -118,7 +122,3 @@ async def websocket_endpoint(websocket: WebSocket):
     except WebSocketDisconnect:
         if websocket in clients:
             clients.remove(websocket)
-        print("--> LOG: Dispositivo desconectado.")
-
-
-       # SERVIDOR
