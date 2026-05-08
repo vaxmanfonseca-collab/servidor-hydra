@@ -3,7 +3,6 @@ from pydantic import BaseModel
 import json
 import os
 
-
 app = FastAPI()
 
 # --- CONFIGURAÇÃO DE PERSISTÊNCIA (PARA O RENDER NÃO ESQUECER) ---
